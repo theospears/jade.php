@@ -8,6 +8,7 @@ class Parser {
     public $basepath; //current file basepath, used for include type
     public function __construct(Lexer $lexer) {
         $this->lexer = $lexer;
+        $this->blocks = [];
     }
 
     public function parse($input) {
@@ -27,6 +28,11 @@ class Parser {
             else {
                 $node->addChild($this->parseExpression());
             }
+        }
+        if ( $source = $this->extending ) {
+          $sub_parser = new Parser(new Lexer());
+          $sub_parser->blocks = &$this->blocks;
+          return $sub_parser->parse($source);
         }
 
         return $node;
@@ -48,6 +54,10 @@ class Parser {
 
     protected function parseExpression() {
         switch ( $this->lexer->predictToken()->type ) {
+            case 'extends':
+                return $this->parseExtends();
+            case 'block':
+                return $this->parseDeclareBlock();
             case 'include':
                 return $this->parseInclude();
             case 'tag':
@@ -110,6 +120,48 @@ class Parser {
         }
 
         return $node;
+    }
+
+    protected function parseDeclareBlock() {
+        $token  = $this->expectTokenType('block');
+        $name = $token->value;
+
+        // Get contents of block declared here if any
+        while ( $this->lexer->predictToken()->type === 'newline' ) {
+            $this->lexer->getAdvancedToken();
+        }
+        if ( $this->lexer->predictToken()->type === 'indent' ) {
+            $block = $this->parseBlock();
+        } else {
+            $block = new Node('text', '');
+        }
+        $block->operation = $token->operation;
+
+        $hasPrev = isset($this->blocks[$name]);
+        if($hasPrev) {
+          $prev = $this->blocks[$name];
+          switch($prev->operation) {
+            case 'prepend':
+              $prev->addChildren($block->children);
+              break;
+            case 'append':
+              $block->addChildren($prev->children);
+              $prev = $block;
+              break;
+          }
+        }
+
+        return $this->blocks[$name] = ($hasPrev ? $prev : $block);
+    }
+
+    protected function parseExtends() {
+        $token = $this->expectTokenType('extends');
+        $filename = (strripos($token->value , ".jade", -5) !== False ) ? $token->value : $token->value.".jade";
+        $source = realpath($this->basepath) . DIRECTORY_SEPARATOR . $filename;
+        $this->extending = $source;
+
+
+        return new Node('text', ''); // null block
     }
 
     protected function parseInclude() {

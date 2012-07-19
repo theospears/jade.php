@@ -109,7 +109,9 @@ class Lexer {
      */
     protected function getNextToken() {
         $scanners = array(
-            'INCLUDE'
+            'EXTENDS'
+          , 'BLOCK'
+          , 'INCLUDE'
           , 'getDeferredToken'
           , 'scanEOS'
           , 'TAG'
@@ -275,6 +277,8 @@ class Lexer {
     function next($type) {
         //echo $type.PHP_EOL;
         $map = array(
+            'EXTENDS'=>'/^extends +([^\n]+)/',
+            'BLOCK'=>'/^block +(?:(prepend|append) +)?([^\n]+)/',
             'INCLUDE'=>'/^include +([^\n]+)/',
             'DOCUMENT_TYPE'=>'/^(?:!!!|doctype) *(\w+)?/',
             'TAG'=>'/^(\w[\w:-]*\w)|^(\w[\w-]*)/',
@@ -305,6 +309,8 @@ class Lexer {
             'DOCUMENT_TYPE'=>'doctype',
             'TAG'=>'tag',
             'FILTER'=>'filter',
+            'EXTENDS'=>'extends',
+            'BLOCK'=>'block',
             'INCLUDE'=>'include',
             'SCRIPT'=>'code',
             'ID'=>'id',
@@ -314,6 +320,9 @@ class Lexer {
         );
 
         $index = 0;
+        if ($type == 'EXTENDS') {
+            $index = 1;
+        }
         if ($type == 'INCLUDE') {
             $index = 1;
         }
@@ -325,6 +334,9 @@ class Lexer {
         }
         if ($type == 'ATTRIBUTE') {
             return $data;
+        }
+        if ($type == 'BLOCK') {
+            return (object) array('type'=>$remap[$type], 'operation'=>$data[1], 'value'=>$data[2]);
         }
         return (object) array('type'=>$remap[$type], 'value'=>$data[$index]);
     }
