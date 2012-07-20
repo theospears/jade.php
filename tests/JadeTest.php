@@ -45,7 +45,7 @@ class JadeTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals("<p>\n  'foo'\n</p>", $this->parse("p\n  | 'foo'"));
         $this->assertEquals(<<<HTML
 <?php \$path = 'foo' ?>
-<a href="/<?php echo jade_text(\$path) ?>"></a>
+<a href="/<?php echo Jade\Dumper::_text(path); ?>"></a>
 HTML
 , $this->parse(<<<Jade
 - \$path = 'foo'
