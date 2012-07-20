@@ -1,13 +1,15 @@
 <?php
 
-require '../work.php';
-require '../lib/Node.php';
-require '../lib/Dumper.php';
-require '../lib/Lexer.php';
-require '../lib/Parser.php';
-require '../Jade.php';
+require_once 'src/Jade/Node.php';
+require_once 'src/Jade/Dumper.php';
+require_once 'src/Jade/Lexer.php';
+require_once 'src/Jade/Parser.php';
+require_once 'src/Jade/Jade.php';
 
-
+use Jade\Jade;
+use Jade\Dumper;
+use Jade\Parser;
+use Jade\Lexer;
 
 class JadeTest extends \PHPUnit_Framework_TestCase {
 
